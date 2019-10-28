@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading;
@@ -69,8 +70,8 @@ namespace AzureFunctions.Extensions.Swashbuckle
 
 
         public SwashbuckleConfig(
-            IApiDescriptionGroupCollectionProvider apiDescriptionGroupCollectionProvider, 
-            IOptions<Option> functionsOptions, 
+            IApiDescriptionGroupCollectionProvider apiDescriptionGroupCollectionProvider,
+            IOptions<Option> functionsOptions,
             SwashBuckleStartupConfig startupConfig,
             IOptions<HttpOptions> httpOptions)
         {
@@ -82,10 +83,15 @@ namespace AzureFunctions.Extensions.Swashbuckle
                 var binPath = Path.GetDirectoryName(startupConfig.Assembly.Location);
                 var binDirectory = Directory.CreateDirectory(binPath);
                 var xmlBasePath = binDirectory?.Parent?.FullName;
-                var xmlPath = Path.Combine(xmlBasePath, _option.XmlPath);
-                if (File.Exists(xmlPath))
+
+                var xmlFiles = _option.XmlPath.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+                foreach (var xmlFile in xmlFiles)
                 {
-                    _xmlPath = xmlPath;
+                    var xmlPath = Path.Combine(xmlBasePath, xmlFile);
+                    if (File.Exists(xmlPath))
+                    {
+                        _xmlPath += xmlFile + ";";
+                    }
                 }
             }
             _indexHtmLazy = new Lazy<string>(() => IndexHtml.Value.Replace("{title}", _option.Title));
@@ -119,16 +125,17 @@ namespace AzureFunctions.Extensions.Swashbuckle
                         AddSwaggerDocument(options, optionDocument);
                     }
                 }
-                
+
                 options.DescribeAllEnumsAsStrings();
 
-                if(!string.IsNullOrWhiteSpace(_xmlPath))
+                if (!string.IsNullOrWhiteSpace(_xmlPath))
                 {
-                    options.IncludeXmlComments(_xmlPath);
+                    var xmlFiles = _xmlPath.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
+                    xmlFiles.ForEach(xmlFile => options.IncludeXmlComments(xmlFile));
                 }
                 options.OperationFilter<FunctionsOperationFilter>();
                 options.OperationFilter<QueryStringParameterAttributeFilter>();
-            });            
+            });
 
             _serviceProvider = services.BuildServiceProvider(true);
 

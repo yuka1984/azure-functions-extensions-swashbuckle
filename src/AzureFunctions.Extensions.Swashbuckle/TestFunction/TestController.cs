@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using TestModels;
 
 namespace TestFunction
 {
@@ -69,31 +70,6 @@ namespace TestFunction
         public Task<IActionResult> Add([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "test")]TestModel testModel)
         {
             return Task.FromResult<IActionResult>(new CreatedResult("", testModel));
-        }
-
-        /// <summary>
-        /// テストモデル
-        /// </summary>
-        public class TestModel
-        {
-            /// <summary>
-            /// Id
-            /// </summary>
-            [Required]
-            public int Id { get; set; }
-
-            /// <summary>
-            /// 名前
-            /// </summary>
-            [Required]
-            [MaxLength(512)]
-            public string Name { get; set; }
-
-            /// <summary>
-            /// 詳細説明
-            /// </summary>
-            [MaxLength(10240)]
-            public string Description { get; set; }
         }
     }
 }

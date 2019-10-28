@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>TestModels</name>
+    </assembly>
+    <members>
+        <member name="T:TestModels.TestModel">
+            <summary>
+            テストモデル
+            </summary>
+        </member>
+        <member name="P:TestModels.TestModel.Id">
+            <summary>
+            Id
+            </summary>
+        </member>
+        <member name="P:TestModels.TestModel.Name">
+            <summary>
+            名前
+            </summary>
+        </member>
+        <member name="P:TestModels.TestModel.Description">
+            <summary>
+            詳細説明
+            </summary>
+        </member>
+    </members>
+</doc>
