@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -24,7 +25,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
     {
         private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionGroupCollectionProvider;
         private readonly Option _option;
-        private readonly string _xmlPath;
+        private readonly List<string> _xmlFullPaths = new List<string>();
         private ServiceProvider _serviceProvider;
         private readonly HttpOptions _httpOptions;
 
@@ -78,19 +79,20 @@ namespace AzureFunctions.Extensions.Swashbuckle
             _apiDescriptionGroupCollectionProvider = apiDescriptionGroupCollectionProvider;
             _option = functionsOptions.Value;
             _httpOptions = httpOptions.Value;
-            if (!string.IsNullOrWhiteSpace(_option.XmlPath))
-            {
-                var binPath = Path.GetDirectoryName(startupConfig.Assembly.Location);
-                var binDirectory = Directory.CreateDirectory(binPath);
-                var xmlBasePath = binDirectory?.Parent?.FullName;
 
-                var xmlFiles = _option.XmlPath.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
-                foreach (var xmlFile in xmlFiles)
+            if (_option.XmlPaths != null && _option.XmlPaths.Any())
+            {
+                foreach (var xmlPath in _option.XmlPaths)
                 {
-                    var xmlPath = Path.Combine(xmlBasePath, xmlFile);
-                    if (File.Exists(xmlPath))
+                    if (string.IsNullOrWhiteSpace(xmlPath))
                     {
-                        _xmlPath += xmlFile + ";";
+                        continue;
+                    }
+
+                    var xmlFullPath = Path.Combine(startupConfig.AppDirectory, xmlPath);
+                    if (File.Exists(xmlFullPath))
+                    {
+                        _xmlFullPaths.Add(xmlFullPath);
                     }
                 }
             }
@@ -128,10 +130,9 @@ namespace AzureFunctions.Extensions.Swashbuckle
 
                 options.DescribeAllEnumsAsStrings();
 
-                if (!string.IsNullOrWhiteSpace(_xmlPath))
+                if (_xmlFullPaths.Any())
                 {
-                    var xmlFiles = _xmlPath.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
-                    xmlFiles.ForEach(xmlFile => options.IncludeXmlComments(xmlFile));
+                    _xmlFullPaths.ForEach(xmlFullPath => options.IncludeXmlComments(xmlFullPath));
                 }
                 options.OperationFilter<FunctionsOperationFilter>();
                 options.OperationFilter<QueryStringParameterAttributeFilter>();
