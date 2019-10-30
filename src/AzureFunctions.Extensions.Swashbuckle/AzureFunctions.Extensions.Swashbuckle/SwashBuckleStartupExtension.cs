@@ -14,15 +14,15 @@ namespace AzureFunctions.Extensions.Swashbuckle
 {
     public static class SwashBuckleStartupExtension
     {
-        public static IWebJobsBuilder AddSwashBuckle(this IWebJobsBuilder builder, Assembly assembly)
+        public static IWebJobsBuilder AddSwashBuckle(this IWebJobsBuilder builder, Assembly assembly, string appDirectory)
         {
             builder.AddExtension<SwashbuckleConfig>()
                 .BindOptions<Option>()
                 .Services.AddSingleton(new SwashBuckleStartupConfig
                 {
-                    Assembly = assembly
-                })
-                ;
+                    Assembly = assembly,
+                    AppDirectory = appDirectory
+                });
             builder.Services.AddSingleton<IOutputFormatter>(c =>
                 new JsonOutputFormatter(new JsonSerializerSettings(), ArrayPool<char>.Create()));
 
