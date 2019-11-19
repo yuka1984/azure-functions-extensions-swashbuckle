@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading;
@@ -23,7 +25,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
     {
         private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionGroupCollectionProvider;
         private readonly Option _option;
-        private readonly string _xmlPath;
+        private readonly List<string> _xmlFullPaths = new List<string>();
         private ServiceProvider _serviceProvider;
         private readonly HttpOptions _httpOptions;
 
@@ -69,23 +71,29 @@ namespace AzureFunctions.Extensions.Swashbuckle
 
 
         public SwashbuckleConfig(
-            IApiDescriptionGroupCollectionProvider apiDescriptionGroupCollectionProvider, 
-            IOptions<Option> functionsOptions, 
+            IApiDescriptionGroupCollectionProvider apiDescriptionGroupCollectionProvider,
+            IOptions<Option> functionsOptions,
             SwashBuckleStartupConfig startupConfig,
             IOptions<HttpOptions> httpOptions)
         {
             _apiDescriptionGroupCollectionProvider = apiDescriptionGroupCollectionProvider;
             _option = functionsOptions.Value;
             _httpOptions = httpOptions.Value;
-            if (!string.IsNullOrWhiteSpace(_option.XmlPath))
+
+            if (_option.XmlPaths != null && _option.XmlPaths.Any())
             {
-                var binPath = Path.GetDirectoryName(startupConfig.Assembly.Location);
-                var binDirectory = Directory.CreateDirectory(binPath);
-                var xmlBasePath = binDirectory?.Parent?.FullName;
-                var xmlPath = Path.Combine(xmlBasePath, _option.XmlPath);
-                if (File.Exists(xmlPath))
+                foreach (var xmlPath in _option.XmlPaths)
                 {
-                    _xmlPath = xmlPath;
+                    if (string.IsNullOrWhiteSpace(xmlPath))
+                    {
+                        continue;
+                    }
+
+                    var xmlFullPath = Path.Combine(startupConfig.AppDirectory, xmlPath);
+                    if (File.Exists(xmlFullPath))
+                    {
+                        _xmlFullPaths.Add(xmlFullPath);
+                    }
                 }
             }
             _indexHtmLazy = new Lazy<string>(() => IndexHtml.Value.Replace("{title}", _option.Title));
@@ -119,16 +127,16 @@ namespace AzureFunctions.Extensions.Swashbuckle
                         AddSwaggerDocument(options, optionDocument);
                     }
                 }
-                
+
                 options.DescribeAllEnumsAsStrings();
 
-                if(!string.IsNullOrWhiteSpace(_xmlPath))
+                if (_xmlFullPaths.Any())
                 {
-                    options.IncludeXmlComments(_xmlPath);
+                    _xmlFullPaths.ForEach(xmlFullPath => options.IncludeXmlComments(xmlFullPath));
                 }
                 options.OperationFilter<FunctionsOperationFilter>();
                 options.OperationFilter<QueryStringParameterAttributeFilter>();
-            });            
+            });
 
             _serviceProvider = services.BuildServiceProvider(true);
 

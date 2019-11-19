@@ -24,32 +24,20 @@
             <param name="id">テストId</param>
             <returns>指定されたテスト</returns>
         </member>
-        <member name="M:TestFunction.TestController.Add(TestFunction.TestController.TestModel)">
+        <member name="M:TestFunction.TestController.GetCat(Microsoft.AspNetCore.Http.HttpRequest,System.Int32,System.Nullable{System.Int32})">
+            <summary>
+            テストの取得
+            </summary>
+            <param name="request"></param>
+            <param name="id">テストId</param>
+            <returns>指定されたテスト</returns>
+        </member>
+        <member name="M:TestFunction.TestController.Add(TestModels.TestModel)">
             <summary>
             テストの追加
             </summary>
             <param name="testModel">テストモデル</param>
             <returns>追加結果</returns>
-        </member>
-        <member name="T:TestFunction.TestController.TestModel">
-            <summary>
-            テストモデル
-            </summary>
-        </member>
-        <member name="P:TestFunction.TestController.TestModel.Id">
-            <summary>
-            Id
-            </summary>
-        </member>
-        <member name="P:TestFunction.TestController.TestModel.Name">
-            <summary>
-            名前
-            </summary>
-        </member>
-        <member name="P:TestFunction.TestController.TestModel.Description">
-            <summary>
-            詳細説明
-            </summary>
         </member>
     </members>
 </doc>
