@@ -2,6 +2,8 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AzureFunctions.Extensions.Swashbuckle
 {
@@ -37,6 +39,32 @@ namespace AzureFunctions.Extensions.Swashbuckle
             result.RequestMessage = requestMessage;
             result.Content = new StringContent(document, Encoding.UTF8, "text/html");
             return result;
+        }
+
+        public static IActionResult CreateSwaggerDocumentResponse(this ISwashBuckleClient client,
+            HttpRequest request, string documentName = "v1")
+        {
+            var stream = client.GetSwaggerDocument(request.Host.ToString(), documentName);
+            var reader = new StreamReader(stream);
+            var document = reader.ReadToEnd();
+
+            return new FileContentResult(Encoding.UTF8.GetBytes(document), "application/json");
+        }
+
+        public static IActionResult CreateSwaggerUIResponse(this ISwashBuckleClient client,
+            HttpRequest request, string documentRoute)
+        {
+            string routePrefix = string.IsNullOrEmpty(client.RoutePrefix)
+                ? string.Empty
+                : $"/{client.RoutePrefix}";
+
+            var stream =
+                client.GetSwaggerUi(
+                    $"{request.Scheme}://{request.Host.ToString().TrimEnd('/')}{routePrefix}/{documentRoute}");
+            var reader = new StreamReader(stream);
+            var document = reader.ReadToEnd();
+
+            return new FileContentResult(Encoding.UTF8.GetBytes(document), "text/html");
         }
     }
 }
