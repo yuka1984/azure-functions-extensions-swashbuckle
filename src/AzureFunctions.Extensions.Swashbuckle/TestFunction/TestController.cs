@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -95,6 +96,32 @@ namespace TestFunction
             }
 
             return new OkResult();
+        }
+        
+        /// <summary>
+        /// Test array query parameters.
+        /// </summary>
+        /// <param name="request">The request.</param>
+        [ProducesResponseType(typeof(TestModel[]), (int)HttpStatusCode.OK)]
+        [FunctionName("TestGetsArrayQueryParam")]
+        [QueryStringParameter("intList", "List of int", DataType = typeof(IEnumerable<int>), Required = false)]
+        [QueryStringParameter("stringList", "List of string", DataType = typeof(List<string>), Required = false)]
+        [QueryStringParameter("dateTimeList", "List of DateTime", DataType = typeof(DateTime[]), Required = false)]
+        [QueryStringParameter("guidList", "List of GUID", DataType = typeof(IList<Guid>), Required = false)]
+        [QueryStringParameter("defaultTypeParameter", "Default parameter", Required = false)]
+        [QueryStringParameter("intParameter", "Int parameter", DataType = typeof(int), Required = false)]
+        [QueryStringParameter("stringParameter", "String parameter", DataType = typeof(string), Required = false)]
+        [QueryStringParameter("dateTimeParameter", "DateTime parameter", DataType = typeof(DateTime), Required = false)]
+        [QueryStringParameter("guidParameter", "Guid parameter", DataType = typeof(Guid), Required = false)]
+        public async Task<IActionResult> GetsArrayQueryParam([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "testarray")] HttpRequest request)
+        {
+            var intList = request.Query["intList"].ToArray();
+            var stringList = request.Query["stringList"].ToArray();
+            var dateTimeList = request.Query["dateTimeList"].ToArray();
+            var defaultTypeParameter = request.Query["defaultTypeParameter"];
+            var intParameter = request.Query["intParameter"];
+            var stringParameter = request.Query["stringParameter"];
+            return new OkObjectResult(new[] { new TestModel(), new TestModel(), });
         }
 
         /// <summary>

@@ -17,14 +17,26 @@ namespace AzureFunctions.Extensions.Swashbuckle
                 .OfType<QueryStringParameterAttribute>();
 
             foreach (var attribute in attributes)
-                operation.Parameters.Add(new NonBodyParameter
+            {
+                Schema type = context.SchemaRegistry.GetOrRegister(attribute.DataType ?? typeof(string));
+                var parameter = new NonBodyParameter
                 {
                     Name = attribute.Name,
                     Description = attribute.Description,
                     In = "query",
                     Required = attribute.Required,
-                    Type = context.SchemaRegistry.GetOrRegister(attribute.DataType ?? typeof(string)).Type
-                });
+                    Type = type.Type,
+                    Format = type.Format
+                };
+
+                if (attribute.DataType != null && attribute.DataType.IsEnumerable(out Type _) && attribute.DataType != typeof(string)) // string is an enumerable, but should not be handled as an array
+                {
+                    parameter.CollectionFormat = "multi";
+                    parameter.Items = new PartialSchema { Type = type.Items.Type, Format = type.Items.Format};
+                }
+
+                operation.Parameters.Add(parameter);
+            }
         }
     }
 }

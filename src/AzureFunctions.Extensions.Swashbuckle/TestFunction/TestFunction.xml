@@ -46,6 +46,12 @@
             <param name="testModel">テストモデル</param>
             <returns>追加結果</returns>
         </member>
+        <member name="M:TestFunction.TestController.GetsArrayQueryParam(Microsoft.AspNetCore.Http.HttpRequest)">
+            <summary>
+            Test array query parameters.
+            </summary>
+            <param name="request">The request.</param>
+        </member>
         <member name="T:TestFunction.TestController.TestModel">
             <summary>
             テストモデル
