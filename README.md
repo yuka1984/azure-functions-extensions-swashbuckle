@@ -93,7 +93,7 @@ AzureFunctions.Extensions.Swashbuckle can include xml document file.
 
 1. Change your functions project's GenerateDocumentationFile option to enable.
 
-2. Add configration setting this extensions on your functions project's hots.json
+2. Add configration setting this extensions on your functions project's host.json
 
 ```json
 {
