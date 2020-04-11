@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using AzureFunctions.Extensions.Swashbuckle;
@@ -16,6 +17,7 @@ using TestFunction;
 [assembly: WebJobsStartup(typeof(SwashBuckleStartup))]
 namespace TestFunction
 {
+    
     internal class SwashBuckleStartup : IWebJobsStartup
     {
         public void Configure(IWebJobsBuilder builder)

@@ -90,7 +90,7 @@ namespace TestFunction
         [FunctionName("TestAddGet")]
         public async Task<IActionResult> AddAndGet(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "testandget")]
-            [RequestBodyType(typeof(TestModel), "The request body")]HttpRequest httpRequest)
+            [RequestBodyType(typeof(TestModel), "The request body", name: "Payload")]HttpRequest httpRequest)
         {
             if (httpRequest.Method.ToLower() == "post")
             {
