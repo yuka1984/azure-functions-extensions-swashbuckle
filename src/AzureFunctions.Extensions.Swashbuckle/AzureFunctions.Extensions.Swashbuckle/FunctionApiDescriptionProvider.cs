@@ -280,6 +280,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
                 {
                     Name = parameter.Name,
                     Type = type,
+                    ModelMetadata = _modelMetadataProvider.GetMetadataForType(type),
                     Source = bindingSource,
                     RouteInfo = new ApiParameterRouteInfo
                     {
