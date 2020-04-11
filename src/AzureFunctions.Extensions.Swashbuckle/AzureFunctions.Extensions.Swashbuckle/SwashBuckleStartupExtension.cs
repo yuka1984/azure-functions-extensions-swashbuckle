@@ -17,29 +17,31 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace AzureFunctions.Extensions.Swashbuckle
 {
     public static class SwashBuckleStartupExtension
     {
-        public static IWebJobsBuilder AddSwashBuckle(this IWebJobsBuilder builder, Assembly assembly)
+        public static IWebJobsBuilder AddSwashBuckle(this IWebJobsBuilder builder, Assembly assembly, Action<Option> configure = null)
         {
             builder.AddExtension<SwashbuckleConfig>()
                 .BindOptions<Option>()
+                .ConfigureOptions<Option>((config, section, options) => { configure?.Invoke(options); })
                 .Services.AddSingleton(new SwashBuckleStartupConfig
                 {
                     Assembly = assembly
-                })
-                ;
+                });
+
             builder.Services.AddSingleton<IOutputFormatter>(c =>
                 new JsonOutputFormatter(new JsonSerializerSettings(), ArrayPool<char>.Create()));
 
             builder.Services.AddSingleton<IModelMetadataProvider>(c => new DefaultModelMetadataProvider(
                 new DefaultCompositeMetadataDetailsProvider(
-                new List<IMetadataDetailsProvider>()
-                {
-                    new DefaultValidationMetadataProvider(),
-                })));
+                    new List<IMetadataDetailsProvider>()
+                    {
+                        new DefaultValidationMetadataProvider(),
+                    })));
 
             builder.Services.AddSingleton<IApiDescriptionGroupCollectionProvider, FunctionApiDescriptionProvider>();
 

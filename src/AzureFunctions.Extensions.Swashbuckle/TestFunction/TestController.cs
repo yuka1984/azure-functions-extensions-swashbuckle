@@ -2,15 +2,20 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using AzureFunctions.Extensions.Swashbuckle.Attribute;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace TestFunction
 {
@@ -81,8 +86,11 @@ namespace TestFunction
         /// <returns>追加結果</returns>
         [ProducesResponseType(typeof(TestModel), (int)HttpStatusCode.Created)]
         [QueryStringParameter("test", "test", Required = false)]
+        
         [FunctionName("TestAddGet")]
-        public async Task<IActionResult> AddAndGet([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "testandget")]HttpRequest httpRequest)
+        public async Task<IActionResult> AddAndGet(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "testandget")]
+            [RequestBodyType(typeof(TestModel), "The request body")]HttpRequest httpRequest)
         {
             if (httpRequest.Method.ToLower() == "post")
             {
@@ -97,6 +105,46 @@ namespace TestFunction
             return new OkResult();
         }
 
+        public class TypeExcludeFilter : ISchemaFilter
+        {
+            private HashSet<Type> _types;
+
+            public class Options
+            {
+                public Options(params  Type[] types)
+                {
+                    Types = types;
+                }
+
+                public Type[] Types { get; }
+            }
+            
+            public TypeExcludeFilter(Options options)
+            {
+                _types = new HashSet<Type>(options.Types);
+            }
+            
+            public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+            {
+                if (schema?.Properties == null || context.Type == null)
+                    return;
+
+                foreach (var type in _types)
+                {
+                    context.SchemaRepository.Schemas.Remove(type.Name);
+                }
+                
+                var excludedProperties = context.Type.GetProperties()
+                    .Where(t => _types.Contains(t.PropertyType)).ToArray();
+                
+                foreach (var excludedProperty in excludedProperties)
+                {
+                    if (schema.Properties.ContainsKey(excludedProperty.Name))
+                        schema.Properties.Remove(excludedProperty.Name);
+                }
+            }
+        }
+        
         /// <summary>
         /// テストモデル
         /// </summary>
@@ -120,6 +168,9 @@ namespace TestFunction
             /// </summary>
             [MaxLength(10240)]
             public string Description { get; set; }
+            
+            [JsonIgnore]
+            public IModelValidator Validator { get; set; }
         }
     }
 }
