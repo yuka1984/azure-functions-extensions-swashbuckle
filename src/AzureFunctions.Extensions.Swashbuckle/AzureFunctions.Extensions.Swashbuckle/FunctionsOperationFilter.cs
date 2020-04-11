@@ -1,40 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
 using AzureFunctions.Extensions.Swashbuckle.Attribute;
-using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace AzureFunctions.Extensions.Swashbuckle
 {
     internal class FunctionsOperationFilter : IOperationFilter
     {
-        public void Apply(Operation operation, OperationFilterContext context)
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
             if (operation.Parameters == null)
-                operation.Parameters = new List<IParameter>();
+                operation.Parameters = new List<OpenApiParameter>();
 
             foreach (var customAttribute in context.MethodInfo.GetCustomAttributes(typeof(RequestHttpHeaderAttribute), false))
             {
-                operation.Parameters.Add(new NonBodyParameter
+                operation.Parameters.Add(new OpenApiParameter
                 {
                     Name = (customAttribute as RequestHttpHeaderAttribute).HeaderName,
-                    In = "header",
-                    Type = "string",
+                    In = ParameterLocation.Header,
+                    Schema = context.SchemaRepository.Schemas["string"],
                     Required = (customAttribute as RequestHttpHeaderAttribute).IsRequired
                 });
             }
 
-            foreach (var customAttribute in context.MethodInfo.DeclaringType.GetCustomAttributes(typeof(RequestHttpHeaderAttribute), false))
+            foreach(var parameter in context.MethodInfo.GetParameters())
             {
-                operation.Parameters.Add(new NonBodyParameter
+                foreach (var customAttribute in parameter.GetCustomAttributes(typeof(RequestBodyTypeAttribute), false).OfType<RequestBodyTypeAttribute>())
                 {
-                    Name = (customAttribute as RequestHttpHeaderAttribute).HeaderName,
-                    In = "header",
-                    Type = "string",
-                    Required = (customAttribute as RequestHttpHeaderAttribute).IsRequired
-                });
+                    var type = customAttribute.Type;
+                    var schema = context.SchemaRepository.GetOrAdd(type, type.Name, () => context.SchemaGenerator.GenerateSchema(type, context.SchemaRepository, parameterInfo: parameter));
+                    operation.Parameters.Add(new OpenApiParameter
+                    {
+                        Name = customAttribute.Name ?? parameter.Name,
+                        Description = customAttribute.Description,
+                        Schema = schema,
+                        Required = customAttribute.Required
+                    });
+                }
             }
+            
         }
     }
 }

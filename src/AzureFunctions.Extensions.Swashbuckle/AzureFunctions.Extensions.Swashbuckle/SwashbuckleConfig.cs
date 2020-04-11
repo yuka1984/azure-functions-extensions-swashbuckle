@@ -13,6 +13,9 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Writers;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -107,6 +110,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
             services.AddSingleton<IApiDescriptionGroupCollectionProvider>(_apiDescriptionGroupCollectionProvider);
             services.AddSwaggerGen(options =>
             {
+                
                 if (_option.Documents.Length == 0)
                 {
                     var defaultDocument = new OptionDocument();
@@ -126,9 +130,12 @@ namespace AzureFunctions.Extensions.Swashbuckle
                 {
                     options.IncludeXmlComments(_xmlPath);
                 }
+                
                 options.OperationFilter<FunctionsOperationFilter>();
                 options.OperationFilter<QueryStringParameterAttributeFilter>();
                 options.OperationFilter<GenerateOperationIdFilter>();
+                
+                _option.SwaggerConfigurator.Invoke(options);
             });
 
             _serviceProvider = services.BuildServiceProvider(true);
@@ -140,12 +147,23 @@ namespace AzureFunctions.Extensions.Swashbuckle
             var requiredService = _serviceProvider.GetRequiredService<ISwaggerProvider>();
             string basePath = _option.FillSwaggerBasePathWithRoutePrefix ? $"/{RoutePrefix}" : null;
             var swaggerDocument = requiredService.GetSwagger(documentName, host, basePath);
+            
             var mem = new MemoryStream();
             var streamWriter = new StreamWriter(mem);
-            var mvcOptionsAccessor =
-                (IOptions<MvcJsonOptions>)_serviceProvider.GetService(typeof(IOptions<MvcJsonOptions>));
-            var serializer = SwaggerSerializerFactory.Create(mvcOptionsAccessor);
-            serializer.Serialize(streamWriter, swaggerDocument);
+            var apiJsonWriter = new OpenApiJsonWriter(streamWriter);
+
+            switch (_option.OpenApiSpec)
+            {
+                case OpenApiSpecVersion.OpenApi3_0:
+                    swaggerDocument.SerializeAsV3(apiJsonWriter);
+                    break;    
+                case OpenApiSpecVersion.OpenApi2_0:
+                    swaggerDocument.SerializeAsV2(apiJsonWriter);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
             streamWriter.Flush();
             mem.Position = 0;
             return mem;
@@ -158,7 +176,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
 
         private static void AddSwaggerDocument(SwaggerGenOptions options, OptionDocument document)
         {
-            options.SwaggerDoc(document.Name, new Info
+            options.SwaggerDoc(document.Name, new OpenApiInfo
             {
                 Title = document.Title,
                 Version = document.Version,

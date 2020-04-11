@@ -1,4 +1,9 @@
-﻿namespace AzureFunctions.Extensions.Swashbuckle
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.OpenApi;
+using Swashbuckle.AspNetCore.SwaggerGen;
+
+namespace AzureFunctions.Extensions.Swashbuckle
 {
     public class Option
     {
@@ -12,6 +17,9 @@
         public bool PrepandOperationWithRoutePrefix { get; set; } = true;
 
         public bool FillSwaggerBasePathWithRoutePrefix { get; set; } = false;
+
+        public Action<SwaggerGenOptions> SwaggerConfigurator { get; set; } = (x) => {};
+        public OpenApiSpecVersion OpenApiSpec { get; set; } = OpenApiSpecVersion.OpenApi3_0;
     }
 
     public class OptionDocument
