@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading;
@@ -120,6 +121,11 @@ namespace AzureFunctions.Extensions.Swashbuckle
                     }
                 }
 
+                foreach (var optionSecurityDefinition in _option.SecurityDefinitions)
+                {
+                    AddSwaggerSecurityDefinition(options, optionSecurityDefinition.Key, optionSecurityDefinition.Value);
+                }
+
                 options.DescribeAllEnumsAsStrings();
 
                 if (!string.IsNullOrWhiteSpace(_xmlPath))
@@ -132,7 +138,6 @@ namespace AzureFunctions.Extensions.Swashbuckle
             });
 
             _serviceProvider = services.BuildServiceProvider(true);
-
         }
 
         public Stream GetSwaggerDocument(string host, string documentName = "v1")
@@ -164,6 +169,45 @@ namespace AzureFunctions.Extensions.Swashbuckle
                 Version = document.Version,
                 Description = document.Description,
             });
+        }
+
+        private static void AddSwaggerSecurityDefinition(SwaggerGenOptions options, string name, OptionSecurityScheme securityScheme)
+        {
+            switch (securityScheme?.Type)
+            {
+                case "apiKey":
+                    options.AddSecurityDefinition(name,
+                        new ApiKeyScheme
+                        {
+                            Description = securityScheme.Description,
+                            Name = securityScheme.Name,
+                            In = securityScheme.In
+                        });
+                    break;
+                case "basic":
+                    options.AddSecurityDefinition(name,
+                        new BasicAuthScheme
+                        {
+                            Description = securityScheme.Description
+                        });
+                    break;
+                case "oauth2":
+                    options.AddSecurityDefinition(name,
+                        new OAuth2Scheme
+                        {
+                            Description = securityScheme.Description,
+                            Flow = securityScheme.Flow,
+                            AuthorizationUrl = securityScheme.AuthorizationUrl,
+                            TokenUrl = securityScheme.TokenUrl,
+                            // host.json parser would not allow colons in json keys
+                            Scopes = securityScheme.Scopes.ToDictionary(
+                                s => s.Key.Replace("%3a", ":"),
+                                s => s.Value.Replace("%3a", ":"))
+                        });
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }
