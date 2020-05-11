@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -176,6 +177,7 @@ namespace AzureFunctions.Extensions.Swashbuckle
             switch (securityScheme?.Type)
             {
                 case "apiKey":
+
                     options.AddSecurityDefinition(name,
                         new ApiKeyScheme
                         {
@@ -183,15 +185,31 @@ namespace AzureFunctions.Extensions.Swashbuckle
                             Name = securityScheme.Name,
                             In = securityScheme.In
                         });
+
+                    options.AddSecurityRequirement(
+                        new Dictionary<string, IEnumerable<string>>
+                        {
+                            {name, new string[0]}
+                        });
+
                     break;
                 case "basic":
+
                     options.AddSecurityDefinition(name,
                         new BasicAuthScheme
                         {
                             Description = securityScheme.Description
                         });
+
+                    options.AddSecurityRequirement(
+                        new Dictionary<string, IEnumerable<string>>
+                        {
+                            {name, new string[0]}
+                        });
+
                     break;
                 case "oauth2":
+
                     options.AddSecurityDefinition(name,
                         new OAuth2Scheme
                         {
@@ -204,8 +222,17 @@ namespace AzureFunctions.Extensions.Swashbuckle
                                 s => s.Key.Replace("%3a", ":"),
                                 s => s.Value.Replace("%3a", ":"))
                         });
+
+                    options.AddSecurityRequirement(
+                        new Dictionary<string, IEnumerable<string>>
+                        {
+                            {name, securityScheme.Scopes.Keys.Select(s => s.Replace("%3a", ":"))}
+                        });
+
                     break;
+
                 default:
+
                     break;
             }
         }

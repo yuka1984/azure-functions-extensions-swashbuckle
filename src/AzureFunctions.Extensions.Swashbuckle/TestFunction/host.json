@@ -4,7 +4,7 @@
     "Swashbuckle": {
       "XmlPath": "TestFunction.xml",
       "PrepandOperationWithRoutePrefix": true,
-      "FillSwaggerBasePathWithRoutePrefix": true,
+      "FillSwaggerBasePathWithRoutePrefix": false,
       "SecurityDefinitions": {
         "test_api_key_auth": {
           "type": "apiKey",
