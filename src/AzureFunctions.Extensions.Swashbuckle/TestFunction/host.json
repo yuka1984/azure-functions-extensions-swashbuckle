@@ -4,7 +4,29 @@
     "Swashbuckle": {
       "XmlPath": "TestFunction.xml",
       "PrepandOperationWithRoutePrefix": true,
-      "FillSwaggerBasePathWithRoutePrefix":  true 
-    } 
+      "FillSwaggerBasePathWithRoutePrefix": false,
+      "SecurityDefinitions": {
+        "test_api_key_auth": {
+          "type": "apiKey",
+          "description": "test api key auth",
+          "name": "x-functions-key",
+          "in": "header"
+        },
+        "test_basic_auth": {
+          "type": "basic",
+          "description": "test basic auth"
+        },
+        "test_oauth2_auth": {
+          "type": "oauth2",
+          "description": "test oauth2 auth",
+          "authorizationUrl": "http://swagger.io/api/oauth/dialog",
+          "flow": "implicit",
+          "scopes": {
+            "write%3apets": "modify pets in your account",
+            "read%3apets": "read your pets"
+          }
+        }
+      }
+    }
   }
 }
